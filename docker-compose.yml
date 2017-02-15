@@ -1,0 +1,12 @@
+version: "2"
+services:
+  web:
+    image: docker.io/jlroo/clothesdb
+    ports:
+      - "80:8080"
+    links:
+      - mongo
+  mongo:
+    image: mongo
+    volumes:
+      - /data/mongodb/db:/data/db

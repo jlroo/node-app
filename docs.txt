@@ -1,0 +1,123 @@
+# Commands to build a ECS2 container in AWS using docker Hub image
+
+Useful resources:
+- [AWS ECS CLI Cluster Tutorial Create](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ECS_CLI_tutorial.html#ECS_CLI_tutorial_cluster_create)
+- [Docker Basics](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#use-ecr)
+
+### Create a Dockerfile inside the folder of the application.
+
+```sh
+FROM node:4-onbuild
+
+# Create app directory
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+
+# Install app dependencies
+COPY package.json ./../clothesDB/
+RUN npm install
+
+# Bundle app source
+COPY . ./../clothesDB/
+
+EXPOSE 8080
+CMD [ "npm", "start" ]
+```
+
+### Now we can create a local docker image to push to docker Hub and use it later to build the AWS docker image.
+Inside the app folder containing the Dockerfile build the docker image:
+
+`docker build -t jlroo/clothesdb:latest . `
+
+### After the image is build make sure that the name of the local image follows the convention of docker Hub, `USERNAME/IMAGE_NAME`
+
+`docker push jlroo/clothesdb`
+
+Now we should have an image in our docker Hub that we are going to use with docker-compose to pull our app from docker Hub.
+Path to the docker Hub image: `docker.io/jlroo/clothesdb`
+
+# Amazon ECS cluster setup
+### Configure AWS ECS Command Line
+```
+~/.ecs/config
+[ecs]
+cluster                     = node-app
+aws_profile                 = jlroo
+region                      = us-east-1
+aws_access_key_id           = AKIAIZCYQ5MHKAA2ZWHA
+aws_secret_access_key       = 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
+compose-project-name-prefix = ecscompose-
+compose-service-name-prefix = ecscompose-service-
+cfn-stack-name-prefix       = amazon-ecs-cli-setup-
+```
+
+### Create a ECS2 Cluster
+Now lets create a cluster with 2 instances, you should get a similar output:
+```
+> ecs-cli up --force --keypair jlroo --capability-iam --size 2 --instance-type t2.small
+
+INFO[0000] Created cluster                               cluster=node-app
+INFO[0001] Waiting for your cluster resources to be created...
+INFO[0001] Cloudformation stack status                   stackStatus="CREATE_IN_PROGRESS"
+INFO[0062] Cloudformation stack status                   stackStatus="CREATE_IN_PROGRESS"
+INFO[0123] Cloudformation stack status                   stackStatus="CREATE_IN_PROGRESS"
+INFO[0184] Cloudformation stack status                   stackStatus="CREATE_IN_PROGRESS"
+```
+
+The cluster is now up and runnig and we need to add tasks with the docker images. To do that we need to
+create an YML file with the parameters to upload the docker containers:
+
+### Docker Compose file (YAML)
+This file will help us to create pull the images from docker Hub, create connections between
+the nodejs app and the mongodb service, also open the port for the app and more (see aws docs):
+
+```yml
+> docker-compose.yml
+
+version: "2"
+services:
+  web:
+    image: docker.io/jlroo/clothesdb
+    ports:
+      - "80:8080"
+    links:
+      - mongo
+  mongo:
+    image: mongo
+    volumes:
+      - /data/mongodb/db:/data/db
+```
+
+After creating the compose.yml file we are ready to deploy the compose File to a the Cluster. If we are inside
+the app directory: `ecs-cli compose up` We can also enter the full path to the YAML file: `ecs-cli compose --file docker-compose.yml up`
+
+You should see a similar output:
+
+```
+jlroo@jlroo~/clothesDB> ecs-cli compose up
+WARN[0000] Skipping unsupported YAML option...           option name=networks
+WARN[0000] Skipping unsupported YAML option for service...  option name=networks service name=mongo
+WARN[0000] Skipping unsupported YAML option for service...  option name=networks service name=web
+INFO[0000] Using ECS task definition                     TaskDefinition="ecscompose-clothesDB:4"
+INFO[0000] Starting container...                         container="acdf3435-ee54-418b-bdcf-05f3ed210b52/mongo"
+INFO[0000] Starting container...                         container="acdf3435-ee54-418b-bdcf-05f3ed210b52/web"
+INFO[0000] Describe ECS container status                 container="acdf3435-ee54-418b-bdcf-05f3ed210b52/web"
+INFO[0000] Describe ECS container status                 container="acdf3435-ee54-418b-bdcf-05f3ed210b52/mongo"
+...                 ....              ....            ...                 ....              ....
+INFO[0049] Describe ECS container status                 container="acdf3435-ee54-418b-bdcf-05f3ed210b52/mongo"
+INFO[0061] Started container...                          container="acdf3435-ee54-418b-bdcf-05f3ed210b52/web"
+INFO[0061] Started container...                          container="acdf3435-ee54-418b-bdcf-05f3ed210b52/mongo"
+```
+Now app should be up and running in the open port :80 of the cluster web container. We can see the
+running containers in the cluster with the following command: `ecs-cli ps`
+
+```
+> ecs-cli ps
+Name                                        State    Ports                        TaskDefinition
+acdf3435-ee54-418b-bdcf-05f3ed210b52/web    RUNNING  54.000.000.225:80->8080/tcp  ecscompose-clothesDB:4
+acdf3435-ee54-418b-bdcf-05f3ed210b52/mongo  RUNNING                               ecscompose-clothesDB:4
+de2ce5d3-9e4c-49da-8ff9-c6a1a55a5da3/mongo  RUNNING                               ecscompose-clothesDB:4
+de2ce5d3-9e4c-49da-8ff9-c6a1a55a5da3/web    RUNNING  0.0.0.0:80->8080/tcp         ecscompose-clothesDB:4
+```
+
+When done we can DELETE the instances and the cluster with the following command: `ecs-cli down --force`
