@@ -139,7 +139,7 @@ Inside the app folder containing the Dockerfile build the docker image:
 
 `docker build -t jlroo/clothesdb:latest . `
 
-### After the image is build make sure that the name of the local image follows the convention of docker Hub, `USERNAME/IMAGE_NAME`
+After the image is build make sure that the name of the local image follows the convention of docker Hub, `username/docker_image`
 
 `docker push jlroo/clothesdb`
 
@@ -155,8 +155,8 @@ Path to the docker Hub image: `docker.io/jlroo/clothesdb`
 cluster                     = node-app
 aws_profile                 = jlroo
 region                      = us-east-1
-aws_access_key_id           = AKIAIZCYQ5MHKAA2ZWHA
-aws_secret_access_key       = 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
+aws_access_key_id           = xxxxxxxxxxxxxxxx
+aws_secret_access_key       = xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 compose-project-name-prefix = ecscompose-
 compose-service-name-prefix = ecscompose-service-
 cfn-stack-name-prefix       = amazon-ecs-cli-setup-
