@@ -1,3 +1,5 @@
+[ ![Codeship Status for jlroo/distributed](https://app.codeship.com/projects/7007bb40-d53a-0134-7e99-3a0ebfcad274/status?branch=master)](https://app.codeship.com/projects/202422)
+
 # Distributed Systems
 ### MEAN (Mongo, Express, -Angular, Node) APP
 
