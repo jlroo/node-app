@@ -215,7 +215,7 @@ After creating the docker-compose.yml file we are ready to deploy it to the Clus
 You should see a similar output:
 
 ```
-jlroo@jlroo~/clothesDB> ecs-cli compose up
+> ecs-cli compose up
 WARN[0000] Skipping unsupported YAML option...           option name=networks
 WARN[0000] Skipping unsupported YAML option for service...  option name=networks service name=mongo
 WARN[0000] Skipping unsupported YAML option for service...  option name=networks service name=web
