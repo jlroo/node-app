@@ -45,7 +45,7 @@ app.use(flash()); // use connect-flash for flash messages stored in session
 
 // ROUTES FOR OUR API AND APP
 // =============================================================================
-app.use('/api/', router);
+app.use('/api/v1/', router);
 //require(_path_+'/app/routers')(app,router,passport);
 require('./app/routers')(app,router,passport);
 

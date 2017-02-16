@@ -52,9 +52,6 @@ userSchema.methods.validPassword = function(password) {
 userSchema.methods.generateKey = function (){
   return rand.generateKey();
 };
-// set index and unique for email/apikey
-userSchema.index({email : 1}, {unique:true});
-userSchema.index({apikey : 1}, {unique:true});
 
 // create the model for users and expose it
 module.exports = mongoose.model('User', userSchema);

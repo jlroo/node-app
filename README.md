@@ -1,12 +1,12 @@
 [ ![Codeship Status for jlroo/distributed](https://app.codeship.com/projects/7007bb40-d53a-0134-7e99-3a0ebfcad274/status?branch=master)](https://app.codeship.com/projects/202422)
 
 # Distributed Systems
-### MEAN (Mongo, Express, -Angular, Node) APP
+### MEAN (Mongo, Express, -Angular, Node) Application
 
 This is a simple Node.js web application clothing archive application using [Express 4](http://expressjs.com/).
 
 ## Running Docker-compose
-To run the app with docker you just need to run:
+To run the app with docker follow these steps:
 
 ### Download the repo
 ```sh
@@ -48,14 +48,14 @@ clothesdb_web_1     npm start               Up      0.0.0.0:80->8080/tcp
 
 ```
 
-If all is correct the app should be running in your docker local machine, to confirm the ip address you can run, after confirming the app ip address you can go to the browser `192.168.99.100` :
+If all is correct the app should be running in your docker local machine, to confirm the  what is the ip address of your docker-machine you can run `docker-machine ip` command. After confirming the app ip address you can go to the browser [http://192.168.99.100](http://192.168.99.100) :
 
 ```sh
 >docker-machine ip
 192.168.99.100
 ```
 
-## Running Locally
+# Running Locally
 
 Make sure you have [Node.js](http://nodejs.org/) and the [MongoDB](https://mongodb.com/) installed.
 
@@ -97,10 +97,12 @@ Now for this part you need to change the database configurations, located in `..
 
 ```javascript
 module.exports = {
-                                  // set to mongodb://mongo/box for docker-compose
-    'url' : 'mongodb://mongo/box' // <--- CHANGE HERE Localhost/box
+                                        // set to mongodb://mongo/box for docker-compose
+    'url' : 'mongodb://mongo/box'       // <--- UNCOMMENT IF USING DOCKER
+    //'url' : 'mongodb://localhost/box' // <--- UNCOMMENT FOR LOCAL
 };
 ```
+
 To start the server go inside the project folder `../clothesdb` and run the following command, if everything is correct you should see the following message:
 
 ```sh
@@ -116,7 +118,9 @@ Useful resources:
 - [AWS ECS CLI Cluster Tutorial Create](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ECS_CLI_tutorial.html#ECS_CLI_tutorial_cluster_create)
 - [Docker Basics](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html#use-ecr)
 
-### Create a Dockerfile inside the folder of the application.
+## Local Repo to Docker Hub
+
+Here are the steps on how to dockerize a NodeJS application and that image available in our docker Hub account [https://hub.docker.com/](https://hub.docker.com/). First create a Dockerfile inside the folder of the application.
 
 ```sh
 FROM node:4-onbuild
@@ -126,31 +130,34 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 # Install app dependencies
-COPY package.json ./../clothesDB/
+COPY package.json ./../clothesDB/   # <- PATH TO LOCAL REPO
 RUN npm install
 
 # Bundle app source
-COPY . ./../clothesDB/
+COPY . ./../clothesDB/              # <- PATH TO LOCAL REPO
 
 EXPOSE 8080
 CMD [ "npm", "start" ]
 ```
 
-### Now we can create a local docker image to push to docker Hub and use it later to build the AWS docker image.
-Inside the app folder containing the Dockerfile build the docker image:
+Now we can create a local docker image to push to docker Hub and use it later to build the AWS docker image. Inside the app folder containing the Dockerfile build the docker image:
 
 `docker build -t jlroo/clothesdb:latest . `
 
-After the image is build make sure that the name of the local image follows the convention of docker Hub, `username/docker_image`
+After the image should be part of your local images repo make sure that the name of the local image follows the convention of docker Hub, `username/docker_image` , then push your image to docker hub.
 
 `docker push jlroo/clothesdb`
 
-Now we should have an image in our docker Hub that we are going to use with docker-compose to pull our app from docker Hub.
-Path to the docker Hub image: `docker.io/jlroo/clothesdb`
+Here is a link to this app image in docker Hub [https://hub.docker.com/r/jlroo/clothesdb/](https://hub.docker.com/r/jlroo/clothesdb/) Now we should have an image in our docker Hub that we are going to use with docker-compose to pull our app from docker Hub. Path to the docker Hub image: `docker.io/jlroo/clothesdb`
 
 # Amazon ECS cluster setup
 
 ### Configure AWS ECS Command Line
+
+You can install AWS ECS Command Line tools from here [Installing the Amazon ECS CLI](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ECS_CLI_installation.html). In mac we can install AWS ECS using brew: `brew install amazon-ecs-cli`
+
+Now after installing ECS Command Line tools we need to setup the credentials.
+
 ```
 ~/.ecs/config
 [ecs]
@@ -165,7 +172,8 @@ cfn-stack-name-prefix       = amazon-ecs-cli-setup-
 ```
 
 ### Create a ECS2 Cluster
-Now lets create a cluster with 2 instances, you should get a similar output:
+To create a custer make sure that you have a keypair in your AWS EC2 resources (ec2-key-pairs)[https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html]. Now lets use the ecs-cli command line tool to create a cluster with 2 instances. Make sure that `--keypair KEYNAME_ON_AWS` not your local keypair.pem , if everything works you should get a similar output:
+
 ```
 > ecs-cli up --force --keypair jlroo --capability-iam --size 2 --instance-type t2.small
 
@@ -177,12 +185,13 @@ INFO[0123] Cloudformation stack status                   stackStatus="CREATE_IN_
 INFO[0184] Cloudformation stack status                   stackStatus="CREATE_IN_PROGRESS"
 ```
 
-The cluster is now up and runnig and we need to add tasks with the docker images. To do that we need to
-create an YML file with the parameters to upload the docker containers:
+The cluster is now up and running and we need to add tasks using the docker images. To do that we need to
+create an YAML (YML) file with the parameters to upload the docker containers:
 
 ### Docker Compose file (YAML)
-This file will help us to create pull the images from docker Hub, create connections between
-the nodejs app and the mongodb service, also open the port for the app and more (see aws docs):
+This file will help us to create/pull the images from docker Hub, connect different applications. In this case the nodejs app and mongodb, we can also open the port for the app and more see [aws-docker-basics](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html).
+
+Here is the docker-compose.yml file:
 
 ```
 > docker-compose.yml
@@ -190,7 +199,7 @@ the nodejs app and the mongodb service, also open the port for the app and more 
 version: "2"
 services:
   web:
-    image: docker.io/jlroo/clothesdb
+    image: docker.io/jlroo/clothesdb  # <- PATH TO IMAGE IN DOCKER HUB
     ports:
       - "80:8080"
     links:
@@ -198,11 +207,10 @@ services:
   mongo:
     image: mongo
     volumes:
-      - /data/mongodb/db:/data/db
+      - /data/mongodb/db:/data/db     # <- DB PATH DOCKER IMAGE TO HOST
 ```
 
-After creating the compose.yml file we are ready to deploy the compose File to a the Cluster. If we are inside
-the app directory: `ecs-cli compose up` We can also enter the full path to the YAML file: `ecs-cli compose --file docker-compose.yml up`
+After creating the docker-compose.yml file we are ready to deploy it to the Cluster. Now if we are inside the app directory, just type: `ecs-cli compose up` or we can also enter the full path to the YAML file: `ecs-cli compose --file docker-compose.yml up`
 
 You should see a similar output:
 
@@ -221,8 +229,8 @@ INFO[0049] Describe ECS container status                 container="acdf3435-ee5
 INFO[0061] Started container...                          container="acdf3435-ee54-418b-bdcf-05f3ed210b52/web"
 INFO[0061] Started container...                          container="acdf3435-ee54-418b-bdcf-05f3ed210b52/mongo"
 ```
-Now app should be up and running in the open port :80 of the cluster web container. We can see the
-running containers in the cluster with the following command: `ecs-cli ps`
+
+Now app should be up and running, you can access the app in the selected open port of the cluster (:80) for the app web container. We can see also see the running containers in the cluster with the following command: `ecs-cli ps`
 
 ```
 > ecs-cli ps
@@ -234,3 +242,77 @@ de2ce5d3-9e4c-49da-8ff9-c6a1a55a5da3/web    RUNNING  0.0.0.0:80->8080/tcp       
 ```
 
 When done we can DELETE the instances and the cluster with the following command: `ecs-cli down --force`
+
+# Using the API v1.0
+
+To make API calls you are going to need to register and receive an apikey. After getting the API key you are going to need to authenticate your key to receive a user token.
+
+## User authentication
+### POST `http://192.168.99.100/api/v1/auth`
+
+Get the apikey from the user profile page and authenticate your key to get an API token:
+(No real key/token!)
+
+```sh
+> curl -X POST 'http://192.168.99.100/api/v1/auth?apikey=amcvLkRQaHMwLm1'
+
+{"success":true,"message":"Enjoy your token!","token":"iWUJXRFFmRGZSNEJDLjF1YmJpQ2VWcHRZZXgyOXBsamcvLkRQaHMwLm1ObVgxVyIsInVzZXJuYW1lIj"}
+
+```
+
+You should get an user token to make API queries.
+
+### Testing API token
+
+Using the token we test the API by sending a GET request, you should get a HOLA! message.
+```sh
+> curl -X GET 'http://localhost:8080/api/v1/?token=iWUJXRFFmRGZSNEJDLjF1YmJpQ2VWcHRZZXgyOXBsamcvLkRQaHMwLm1ObVgxV'
+{"message":"Hola Bonjour API V.1.0"}
+```
+
+### POST Create new user
+```sh
+curl -X POST 'http://localhost:8080/api/v1/users/new?username=test&email=test@luc.edu&password=test1&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyISwiZmnGSlc'
+{"message": "User created!"}
+
+```
+
+### GET All users
+
+```sh
+curl -X GET 'http://localhost:8080/api/v1/users?token=iWUJXRFFmRGZSNEJDLjF1YmJpQ2VWcHRZZXgyOXBsamcvLkRQaHMwLm1ObVgxV'
+
+[
+  {
+    "_id": "58a51138f296b0740020c23a",
+    "__v": 0,
+    "local": {
+      "apikey": "zDofwTaNtsIH6iQ9",
+      "username": "jlroo",
+      "password": "$2a$08$fVwJ1Pd0ACf3293egq8rZ/Eu",
+      "email": "jrodriguezorjuela@luc.edu",
+      "created": "2017-02-16T02:40:56.742Z",
+      "items": []
+    }
+  },
+  {
+    "_id": "58a51452f296b0740020c23c",
+    "__v": 0,
+    "local": {
+      "apikey": "xoyAZMB7QI6BQONC",
+      "password": "$2a$08$ffs3Q3HcAplRvcRZXJZwHRSuK",
+      "email": "test@40luc.edu",
+      "username": "test",
+      "created": "2017-02-16T02:54:10.743Z",
+      "items": []
+    }
+  }
+  ....
+  ....
+]
+```
+### DELETE Users with ID
+
+```sh
+curl -X GET 'http://localhost:8080/api/v1/users/58a51452f296b0740020c23c?token=iWUJXRFFmRGZSNEJDLjF1YmJpQ2VWcHRZZXgyOXBsamcvLkRQaHMwLm1ObVgxV'
+```

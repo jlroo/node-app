@@ -1,9 +1,4 @@
 var jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
-//var _path_ = '/Users/jlroo/clothesdb';
-// load up the user model
-//var User = require(_path_+'/app/models/user');
-//var Feed = require(_path_+'/app/models/feed');
-//var Usage = require(_path_+'/app/models/feed');
 var User = require('./../app/models/user');
 var Feed = require('./../app/models/feed');
 var Usage = require('./../app/models/feed');
@@ -67,15 +62,15 @@ module.exports = function(app, router, passport) {
     });
 
     router.get('/', function(req, res) {
-        res.json({ message: 'Hola Bonjour API V.0.5' });
+        res.json({ message: 'Hola Bonjour API V.1.0' });
     });
 
-    router.post('/users',function(req, res){
-              var newUser = new User();                   // create a new instance of the user model
-              newUser.local.username = req.body.username; // set the user parameters
-              newUser.local.email = req.body.email;
-              newUser.local.password = newUser.generateHash(req.body.password);
-              newUser.local.username = req.body.username;
+    // route to new user (POST http://localhost:8080/api/v1/users/new?username&email&password?token=xxxxxxxxxx)
+    router.post('/users/new',function(req, res){
+              var newUser = new User();
+              newUser.local.username = req.params.username;
+              newUser.local.email = req.params.email;
+              newUser.local.password = newUser.generateHash(req.params.password);
               newUser.local.apikey = newUser.generateKey();
               newUser.save(function(err) {
                   if (err)
@@ -110,13 +105,13 @@ module.exports = function(app, router, passport) {
           User.findById(req.params.user_id, function(err, user) {
               if (err)
                   res.send(err);
-              user.local.username = req.body.username;
-              user.local.email = req.body.email;
-              user.local.brand = req.body.brand;
-              user.local.location = req.body.location;
-              user.local.color = req.body.color;
-              user.local.artist = req.body.artist;
-              user.local.media = req.body.media;
+              user.local.username = req.params.username;
+              user.local.email = req.params.email;
+              user.local.brand = req.params.brand;
+              user.local.location = req.params.location;
+              user.local.color = req.params.color;
+              user.local.artist = req.params.artist;
+              user.local.media = req.params.media;
               user.save(function(err) {
                   if (err)
                       res.send(err);
