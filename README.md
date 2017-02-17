@@ -169,7 +169,8 @@ You can install AWS ECS Command Line tools from here [Installing the Amazon ECS 
 Now after installing ECS Command Line tools we need to setup the credentials.
 
 ```
-~/.ecs/config
+> cat ~/.ecs/config
+
 [ecs]
 cluster                     = aws_cluster_name
 aws_profile                 =
@@ -258,15 +259,19 @@ When done we can DELETE the instances and the cluster with the following command
 To make API calls you are going to need to register and receive an apikey. After getting the API key you are going to need to authenticate your key to receive a user token.
 
 ## User authentication
-### POST `http://192.168.99.100/api/v1/auth`
 
 Get the apikey from the user profile page and authenticate your key to get an API token:
-(No real key/token!)
+
+`http://192.168.99.100/api/v1/auth`
 
 ```sh
 > curl -X POST 'http://192.168.99.100/api/v1/auth?apikey=amcvLkRQaHMwLm1'
 
-{"success":true,"message":"Enjoy your token!","token":"iWUJXRFFmRGZSNEJDLjF1YmJpQ2VWcHRZZXgyOXBsamcvLkRQaHMwLm1ObVgxVyIsInVzZXJuYW1lIj"}
+{
+  "success":true,
+  "message":"Enjoy your token!",
+  "token":"iWUJXRFFmRGZSNEJDLjF1YmJpQ2VWcHRZZXgLm1ObVgxVylIj"
+}
 
 ```
 
@@ -276,13 +281,13 @@ You should get an user token to make API queries.
 
 Using the token we test the API by sending a GET request, you should get a HOLA! message.
 ```sh
-> curl -X GET 'http://localhost:8080/api/v1/?token=iWUJXRFFmRGZSNEJDLjF1YmJpQ2VWcHRZZXgyOXBsamcvLkRQaHMwLm1ObVgxV'
+> curl -X GET 'http://localhost:8080/api/v1/?token=iWUJXRFFmRGZSNEJDLjF1YHMwLm1ObVgxV'
 {"message":"Hola Bonjour API V.1.0"}
 ```
 
 ### POST Create new user
 ```sh
-curl -X POST 'http://localhost:8080/api/v1/users/new?username=test&email=test@luc.edu&password=test1&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyISwiZmnGSlc'
+curl -X POST 'http://localhost:8080/api/v1/users/new?username=test&email=test@luc.edu&password=test1&token=eyJhbGciOiIISwiZmnGSlc'
 {"message": "User created!"}
 
 ```
@@ -324,5 +329,5 @@ curl -X GET 'http://localhost:8080/api/v1/users?token=iWUJXRFFmRGZSNEJDLjF1YmJpQ
 ### DELETE Users with ID
 
 ```sh
-curl -X GET 'http://localhost:8080/api/v1/users/58a51452f296b0740020c23c?token=iWUJXRFFmRGZSNEJDLjF1YmJpQ2VWcHRZZXgyOXBsamcvLkRQaHMwLm1ObVgxV'
+curl -X GET 'http://localhost:8080/api/v1/users/58a51452f296b0740020c23c?token=iWUJXRFFmOXBsamcvLkRQaHMwLm1ObVgxV'
 ```

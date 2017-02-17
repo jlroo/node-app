@@ -1,10 +1,13 @@
 var jwt = require('jsonwebtoken');          // create, sign, and verify tokens
+var validator = require('validator');
+var async = require('async');
+
 var User = require('./../app/models/user');
 var Feed = require('./../app/models/feed');
 var Usage = require('./../app/models/feed');
 
 module.exports = function(app, router, passport) {
-  
+
 /// ============================================================================
 // API ROUTES  =================================================================
 // =============================================================================
@@ -68,17 +71,50 @@ module.exports = function(app, router, passport) {
     // route to new user
     // POST http://localhost:8080/api/v1/users/new?username&email&password?token=xxxxxxxxxx
     router.post('/users/new',function(req, res){
-              var newUser = new User();
-              newUser.local.username = req.params.username;
-              newUser.local.email = req.params.email;
-              newUser.local.password = newUser.generateHash(req.params.password);
-              newUser.local.apikey = newUser.generateKey();
-              newUser.save(function(err) {
-                  if (err)
-                      res.send(err);
-                  res.json({ message: 'User created!' });
-              });
-          });
+              errStr = undefined;
+              if (undefined == req.params.username) {
+                  errStr = "Undefined First Name";
+                  logger.debug(errStr);
+                  res.status(400);
+                  res.json({error: errStr});
+                  return;
+              } else if (undefined == req.params.email) {
+                  errStr = "Undefined Email";
+                  logger.debug(errStr);
+                  res.status(400);
+                  res.json({error: errStr});
+                  return;
+              } else if (undefined == req.params.password) {
+                  errStr = "Undefined Password";
+                  logger.debug(errStr);
+                  res.status(400);
+                  res.json({error: errStr});
+                  return;
+              }
+              if (!validator.isEmail(req.params.email)) {
+                  res.status(400);
+                  res.json({error: 'Invalid email format'})
+                  return;
+              }
+              User.find({'local.email' : req.params.email)}, function (err, results) {
+                  if (results.length > 0) {
+                      res.status(400);
+                      res.json({error: 'Account with that email already exists.  Please choose another email.'});
+                      return;
+                  } else {
+                    var newUser = new User();
+                    newUser.local.username = req.params.username;
+                    newUser.local.email = req.params.email;
+                    newUser.local.password = newUser.generateHash(req.params.password);
+                    newUser.local.apikey = newUser.generateKey();
+                    newUser.save(function(err) {
+                        if (err)
+                            res.send(err);
+                        res.json({ message: 'User created!' });
+                    });
+                  }
+                }
+            });
 
     // get all the users (accessed at GET http://localhost:8080/api/users)
     router.get('/users',function(req, res) {
@@ -241,44 +277,6 @@ module.exports = function(app, router, passport) {
             failureFlash : true           // allow flash messages
         }));
 
-/**
-    // facebook -------------------------------
-
-        // send to facebook to do the authentication
-        app.get('/auth/facebook', passport.authenticate('facebook', { scope : 'email' }));
-
-        // handle the callback after facebook has authenticated the user
-        app.get('/auth/facebook/callback',
-            passport.authenticate('facebook', {
-                successRedirect : '/profile',
-                failureRedirect : '/'
-            }));
-
-    // twitter --------------------------------
-
-        // send to twitter to do the authentication
-        app.get('/auth/twitter', passport.authenticate('twitter', { scope : 'email' }));
-
-        // handle the callback after twitter has authenticated the user
-        app.get('/auth/twitter/callback',
-            passport.authenticate('twitter', {
-                successRedirect : '/profile',
-                failureRedirect : '/'
-            }));
-
-
-    // google ---------------------------------
-
-        // send to google to do the authentication
-        app.get('/auth/google', passport.authenticate('google', { scope : ['profile', 'email'] }));
-
-        // the callback after google has authenticated the user
-        app.get('/auth/google/callback',
-            passport.authenticate('google', {
-                successRedirect : '/profile',
-                failureRedirect : '/'
-            }));
-**/
 // =============================================================================
 // AUTHORIZE (ALREADY LOGGED IN / CONNECTING OTHER SOCIAL ACCOUNT) =============
 // =============================================================================
@@ -293,45 +291,6 @@ module.exports = function(app, router, passport) {
             failureFlash : true // allow flash messages
         }));
 
-/**
-
-    // facebook -------------------------------
-
-        // send to facebook to do the authentication
-        app.get('/connect/facebook', passport.authorize('facebook', { scope : 'email' }));
-
-        // handle the callback after facebook has authorized the user
-        app.get('/connect/facebook/callback',
-            passport.authorize('facebook', {
-                successRedirect : '/profile',
-                failureRedirect : '/'
-            }));
-
-    // twitter --------------------------------
-
-        // send to twitter to do the authentication
-        app.get('/connect/twitter', passport.authorize('twitter', { scope : 'email' }));
-
-        // handle the callback after twitter has authorized the user
-        app.get('/connect/twitter/callback',
-            passport.authorize('twitter', {
-                successRedirect : '/profile',
-                failureRedirect : '/'
-            }));
-
-
-    // google ---------------------------------
-
-        // send to google to do the authentication
-        app.get('/connect/google', passport.authorize('google', { scope : ['profile', 'email'] }));
-
-        // the callback after google has authorized the user
-        app.get('/connect/google/callback',
-            passport.authorize('google', {
-                successRedirect : '/profile',
-                failureRedirect : '/'
-            }));
-**/
 // =============================================================================
 // UNLINK ACCOUNTS =============================================================
 // =============================================================================
@@ -348,36 +307,6 @@ module.exports = function(app, router, passport) {
             res.redirect('/profile');
         });
     });
-
-/**
-    // facebook -------------------------------
-    app.get('/unlink/facebook', isLoggedIn, function(req, res) {
-        var user            = req.user;
-        user.facebook.token = undefined;
-        user.save(function(err) {
-            res.redirect('/profile');
-        });
-    });
-
-    // twitter --------------------------------
-    app.get('/unlink/twitter', isLoggedIn, function(req, res) {
-        var user           = req.user;
-        user.twitter.token = undefined;
-        user.save(function(err) {
-            res.redirect('/profile');
-        });
-    });
-
-    // google ---------------------------------
-    app.get('/unlink/google', isLoggedIn, function(req, res) {
-        var user          = req.user;
-        user.google.token = undefined;
-        user.save(function(err) {
-            res.redirect('/profile');
-        });
-    });
-**/
-
 };
 
 // route middleware to ensure user is logged in
