@@ -1,16 +1,13 @@
 // load all the things we need
-//var _path_ = '/Users/jlroo/clothesdb';
 var LocalStrategy = require('passport-local').Strategy;
 var FacebookStrategy = require('passport-facebook').Strategy;
 var TwitterStrategy = require('passport-twitter').Strategy;
 var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 
 // load up the user model
-//var User = require(_path_+'/app/models/user');
 var User = require('./../app/models/user');
 
 // load the auth variables
-//var configAuth = require('/Users/jlroo/adsapp/config/auth'); // use this one for testing
 var configAuth = require('./../config/auth'); // use this one for testing
 
 module.exports = function(passport) {
@@ -154,7 +151,6 @@ module.exports = function(passport) {
 
             // asynchronous
             process.nextTick(function() {
-
                 // check if the user is already logged in
                 if (!req.user) {
 

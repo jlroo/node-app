@@ -5,16 +5,26 @@
 
 This is a simple Node.js web application clothing archive application using [Express 4](http://expressjs.com/).
 
-## Running Docker-compose
-To run the app with docker follow these steps:
+## Running the app with Docker-compose
+To run the app with docker follow these steps, here is a link to download Docker: [http://www.docker.com](http://www.docker.com).
+
+First make sure to set the path to the docker-machine in your bash profile:
+
+```sh
+set -gx DOCKER_TLS_VERIFY "1";
+set -gx DOCKER_HOST "tcp://192.168.99.100:2376";
+set -gx DOCKER_CERT_PATH "/PATH_TO_HOME/.docker/machine/machines/default";
+set -gx DOCKER_MACHINE_NAME "default";
+```
+
+Now start the docker-machine with the command `docker-machine start default`
 
 ### Download the repo
 ```sh
 git clone git@github.com:jlroo/clothesdb.git
 cd clothesdb
 ```
-
-Then run the docker-compose command, if all goes well you should something similar at the end:
+Now inside the repository run `docker-compose up` command that uses the docker-compose.yml file to setup the docker containers if all goes well you should a similar output:
 
 ```
 > docker-compose up
@@ -36,7 +46,7 @@ mongo_1  | 2017-02-14T23:37:16.438+0000 I NETWORK
 web_1    | App running on port 8080
 ```
 
-To verify the status and ports of the app run:
+To verify the status of the machine and ports run the following command:
 
 ```sh
 > docker-compose ps
@@ -161,8 +171,8 @@ Now after installing ECS Command Line tools we need to setup the credentials.
 ```
 ~/.ecs/config
 [ecs]
-cluster                     = node-app
-aws_profile                 = jlroo
+cluster                     = aws_cluster_name
+aws_profile                 =
 region                      = us-east-1
 aws_access_key_id           = xxxxxxxxxxxxxxxx
 aws_secret_access_key       = xxxxxxxxxxxxxxxxxxxxxxxxxxxx

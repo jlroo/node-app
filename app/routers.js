@@ -1,10 +1,10 @@
-var jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
+var jwt = require('jsonwebtoken');          // create, sign, and verify tokens
 var User = require('./../app/models/user');
 var Feed = require('./../app/models/feed');
 var Usage = require('./../app/models/feed');
 
 module.exports = function(app, router, passport) {
-
+  
 /// ============================================================================
 // API ROUTES  =================================================================
 // =============================================================================
@@ -65,7 +65,8 @@ module.exports = function(app, router, passport) {
         res.json({ message: 'Hola Bonjour API V.1.0' });
     });
 
-    // route to new user (POST http://localhost:8080/api/v1/users/new?username&email&password?token=xxxxxxxxxx)
+    // route to new user
+    // POST http://localhost:8080/api/v1/users/new?username&email&password?token=xxxxxxxxxx
     router.post('/users/new',function(req, res){
               var newUser = new User();
               newUser.local.username = req.params.username;
@@ -207,11 +208,13 @@ module.exports = function(app, router, passport) {
             req.logout();
             res.redirect('/');
         });
+
 // =============================================================================
 // AUTHENTICATE (FIRST LOGIN) ==================================================
 // =============================================================================
 
     // locally ----------------------------------------------------------------
+
         // LOGIN ==============================================================
         // show the login form
         app.get('/login', function(req, res) {
@@ -220,9 +223,9 @@ module.exports = function(app, router, passport) {
 
         // process the login form
         app.post('/login', passport.authenticate('local-login', {
-            successRedirect : '/home', // redirect to the secure profile section
-            failureRedirect : '/login', // redirect back to the signup page if there is an error
-            failureFlash : true // allow flash messages
+            successRedirect : '/home',  // redirect to the secure profile section
+            failureRedirect : '/login', // redirect back to the signup page
+            failureFlash : true         // allow flash messages
         }));
 
         // SIGNUP =============================================================
@@ -234,10 +237,11 @@ module.exports = function(app, router, passport) {
         // process the signup form
         app.post('/signup', passport.authenticate('local-signup', {
             successRedirect : '/profile', // redirect to the secure profile section
-            failureRedirect : '/signup', // redirect back to the signup page if there is an error
-            failureFlash : true // allow flash messages
+            failureRedirect : '/signup',  // redirect back to the signup page
+            failureFlash : true           // allow flash messages
         }));
 
+/**
     // facebook -------------------------------
 
         // send to facebook to do the authentication
@@ -274,7 +278,7 @@ module.exports = function(app, router, passport) {
                 successRedirect : '/profile',
                 failureRedirect : '/'
             }));
-
+**/
 // =============================================================================
 // AUTHORIZE (ALREADY LOGGED IN / CONNECTING OTHER SOCIAL ACCOUNT) =============
 // =============================================================================
@@ -288,6 +292,8 @@ module.exports = function(app, router, passport) {
             failureRedirect : '/connect/local', // redirect back to the signup page if there is an error
             failureFlash : true // allow flash messages
         }));
+
+/**
 
     // facebook -------------------------------
 
@@ -325,7 +331,7 @@ module.exports = function(app, router, passport) {
                 successRedirect : '/profile',
                 failureRedirect : '/'
             }));
-
+**/
 // =============================================================================
 // UNLINK ACCOUNTS =============================================================
 // =============================================================================
@@ -343,6 +349,7 @@ module.exports = function(app, router, passport) {
         });
     });
 
+/**
     // facebook -------------------------------
     app.get('/unlink/facebook', isLoggedIn, function(req, res) {
         var user            = req.user;
@@ -369,7 +376,7 @@ module.exports = function(app, router, passport) {
             res.redirect('/profile');
         });
     });
-
+**/
 
 };
 
