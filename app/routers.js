@@ -243,7 +243,6 @@ module.exports = function(app, router, passport) {
                   res.status(400);
                   res.json({error: errStr});
                   return;
-              }
               } if (undefined == media) {
                   errStr = "Undefined media";
                   res.status(400);
