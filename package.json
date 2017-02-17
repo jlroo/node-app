@@ -17,6 +17,8 @@
     "passport-facebook": "~1.0.2",
     "passport-google-oauth": "~0.1.5",
     "passport-twitter": "~1.0.2",
-    "generate-key":"latest"
+    "generate-key":"latest",
+    "validator":"latest",
+    "async":"latest"
   }
 }

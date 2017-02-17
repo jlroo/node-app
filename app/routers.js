@@ -1,7 +1,6 @@
 var jwt = require('jsonwebtoken');          // create, sign, and verify tokens
 var validator = require('validator');
 var async = require('async');
-
 var User = require('./../app/models/user');
 var Feed = require('./../app/models/feed');
 var Usage = require('./../app/models/feed');
@@ -69,52 +68,51 @@ module.exports = function(app, router, passport) {
     });
 
     // route to new user
-    // POST http://localhost:8080/api/v1/users/new?username&email&password?token=xxxxxxxxxx
+    // POST http://localhost:8080/api/v1/users/new?username&email&password&token=xxxxxxxxxx
     router.post('/users/new',function(req, res){
-              errStr = undefined;
-              if (undefined == req.params.username) {
-                  errStr = "Undefined First Name";
-                  logger.debug(errStr);
-                  res.status(400);
-                  res.json({error: errStr});
-                  return;
-              } else if (undefined == req.params.email) {
-                  errStr = "Undefined Email";
-                  logger.debug(errStr);
-                  res.status(400);
-                  res.json({error: errStr});
-                  return;
-              } else if (undefined == req.params.password) {
-                  errStr = "Undefined Password";
-                  logger.debug(errStr);
-                  res.status(400);
-                  res.json({error: errStr});
-                  return;
-              }
-              if (!validator.isEmail(req.params.email)) {
-                  res.status(400);
-                  res.json({error: 'Invalid email format'})
-                  return;
-              }
-              User.find({'local.email' : req.params.email)}, function (err, results) {
-                  if (results.length > 0) {
-                      res.status(400);
-                      res.json({error: 'Account with that email already exists.  Please choose another email.'});
-                      return;
-                  } else {
-                    var newUser = new User();
-                    newUser.local.username = req.params.username;
-                    newUser.local.email = req.params.email;
-                    newUser.local.password = newUser.generateHash(req.params.password);
-                    newUser.local.apikey = newUser.generateKey();
-                    newUser.save(function(err) {
-                        if (err)
-                            res.send(err);
-                        res.json({ message: 'User created!' });
-                    });
-                  }
-                }
+      var username = req.params.username || req.query.username || req.headers['x-access-username'];
+      var email = req.params.email || req.query.email || req.headers['x-access-email'];
+      var password = req.params.password || req.query.password || req.headers['x-access-password'];
+      if (undefined == username) {
+          errStr = "Undefined UserName";
+          res.status(400);
+          res.json({error: errStr});
+          return;
+      } else if (undefined == email) {
+          errStr = "Undefined Email";
+          res.status(400);
+          res.json({error: errStr});
+          return;
+      } else if (undefined == password) {
+          errStr = "Undefined Password";
+          res.status(400);
+          res.json({error: errStr});
+          return;
+      }
+      if (!validator.isEmail(email)) {
+          res.status(400);
+          res.json({error: 'Invalid email format'})
+          return;
+      }
+      User.findOne({'local.email' : email}, function (err, result) {
+          if (result == {}) {
+              res.status(400);
+              res.json({error: 'Account with that email already exists.  Please choose another email.'});
+              return;
+          } else {
+            var newUser = new User();
+            newUser.local.username = req.params.username;
+            newUser.local.email = req.params.email;
+            newUser.local.password = newUser.generateHash(req.params.password);
+            newUser.local.apikey = newUser.generateKey();
+            newUser.save(function(err) {
+                if (err)
+                    res.send(err);
+                res.json({ message: 'User created!' });
             });
+          }
+        });
+    });
 
     // get all the users (accessed at GET http://localhost:8080/api/users)
     router.get('/users',function(req, res) {
@@ -135,20 +133,129 @@ module.exports = function(app, router, passport) {
           });
       });
 
+
+    router.put('/users/:user_id', function(req, res) {
+        var errStr = null;
+        var resultStatus = null;
+        var resultJSON = {user:null};
+        if (err) {
+            errStr = "Error on user profile";
+            res.status(400);
+            res.json({error: errStr,"err":err});
+            return;
+        }
+        var Tasks = [
+            function findUser(cb) {
+                User.findById(req.user_id, function(err, user) {
+                  if (err) {
+                      errStr = 'Internal error with mongoose looking user ' + req.user_id;
+                      resultStatus = 400;
+                      resultJSON = { error : errStr };
+                      cb(new Error(errStr));
+                      return;
+                  }
+                  if (user.length == 0) {
+                      errStr = 'User ID: ' + req.user_id + ' didnt find any objects';
+                      resultStatus = 400;
+                      resultJSON = { error : errStr };
+                      cb(new Error(errStr));
+                      return;
+                  }
+                  cb(null);
+                });
+            },
+            function addInfo(cb) {
+              user.local.brand = req.parms.brand;
+              user.local.location = req.parms.location;
+              user.local.color = req.parms.color;
+              user.local.artist = req.parms.artist;
+              user.local.media = req.parms.media;
+              user.save(function(err) {
+                if (err) {
+                    errStr = 'Error adding new data';
+                    resultStatus = 400;
+                    resultJSON = { error : errStr };
+                    cb(new Error(errStr));
+                    return;
+                } else {
+                  resultJSON = { "OK" : "200" };
+                  res.render('home.ejs', { message: req.flash('loginMessage') });
+                    cb(null);
+                }
+              });
+            }
+        ]
+
+        async.series(Tasks, function finalizer(err, results) {
+            if (null==resultStatus) {
+                res.status(200);
+            } else {
+                res.status(resultStatus);
+            }
+            res.json(resultJSON);
+        });
+    });
+
       // update the user with id
       // accessed at PUT http://localhost:8080/api/users/:user_id)
       router.put('/users/:user_id',function(req, res) {
-          // find user following user model
-          User.findById(req.params.user_id, function(err, user) {
-              if (err)
+        errStr = undefined;
+        if (undefined == req.params.user_id) {
+            errStr = "Undefined user ID";
+            res.status(400);
+            res.json({error: errStr});
+            return;
+        }
+        // find user following user model
+        User.findById(req.params.user_id, function(err, user) {
+              if (err){
+                  res.status(400);
                   res.send(err);
-              user.local.username = req.params.username;
-              user.local.email = req.params.email;
-              user.local.brand = req.params.brand;
-              user.local.location = req.params.location;
-              user.local.color = req.params.color;
-              user.local.artist = req.params.artist;
-              user.local.media = req.params.media;
+              }
+              var username = req.params.username || req.query.username || req.headers['x-access-username'];
+              var brand = req.params.brand || req.query.brand || req.headers['x-access-brand'];
+              var artist = req.params.artist || req.query.artist || req.headers['x-access-artist'];
+              var color = req.params.color || req.query.color || req.headers['x-access-color'];
+              var location = req.params.location || req.query.location || req.headers['x-access-location'];
+
+              if (undefined == username) {
+                  errStr = "Undefined UserName";
+                  res.status(400);
+                  res.json({error: errStr});
+                  return;
+              } else if (undefined == brand) {
+                  errStr = "Undefined Password";
+                  res.status(400);
+                  res.json({error: errStr});
+                  return;
+              } else if (undefined == color) {
+                    errStr = "Undefined color";
+                    res.status(400);
+                    res.json({error: errStr});
+                    return;
+              } else if (undefined == location) {
+                    errStr = "Undefined location";
+                    res.status(400);
+                    res.json({error: errStr});
+                    return;
+              } else if (undefined == artist) {
+                  errStr = "Undefined artist";
+                  res.status(400);
+                  res.json({error: errStr});
+                  return;
+              }
+              } if (undefined == media) {
+                  errStr = "Undefined media";
+                  res.status(400);
+                  res.json({error: errStr});
+                  return;
+              }
+              user.local.username = username;
+              user.local.brand = brand;
+              user.local.location = location;
+              user.local.color = color;
+              user.local.artist = artist;
+              user.local.media = media;
               user.save(function(err) {
                   if (err)
                       res.send(err);
@@ -193,57 +300,118 @@ module.exports = function(app, router, passport) {
         // TRANSACTIONS =================================
 
         app.post('/addThing', isLoggedIn, function(req, res){
-                  var newThing = new Feed();
-                  newThing.state = req.body.state;
-                  newThing.name = req.body.name;
-                  newThing.url = req.body.url;
-                  newThing.brand = req.body.brand;
-                  newThing.category = req.body.category;
-                  newThing.createdDate = req.body.date;
-                  newThing.save(function(err) {
-                      if (err)
-                          res.send(err);
-                      res.render('home.ejs', { message: req.flash('loginMessage') });
-                  })
+          var errStr = undefined
+          if (undefined == req.body.state) {
+              errStr = "Undefined State";
+              res.status(400);
+              res.json({error: errStr});
+              return;
+          } else if (undefined == req.body.name) {
+              errStr = "Undefined Name";
+              res.status(400);
+              res.json({error: errStr});
+              return;
+          } else if (undefined == req.body.url) {
+              errStr = "Undefined Url";
+              res.status(400);
+              res.json({error: errStr});
+              return;
+          } else if (undefined == req.body.brand) {
+              errStr = "Undefined Brand";
+              res.status(400);
+              res.json({error: errStr});
+              return;
+          } else if (undefined == req.body.category) {
+              errStr = "Undefined Category";
+              res.status(400);
+              res.json({error: errStr});
+              return;
+          }
+          if (undefined == req.body.date) {
+              errStr = "Undefined Date";
+              res.status(400);
+              res.json({error: errStr});
+              return;
+          }
+          var newThing = new Feed();
+          newThing.state = req.body.state;
+          newThing.name = req.body.name;
+          newThing.url = req.body.url;
+          newThing.brand = req.body.brand;
+          newThing.category = req.body.category;
+          newThing.createdDate = req.body.date;
+          newThing.save(function(err) {
+              if (err)
+                  res.send(err);
+              res.render('home.ejs', { message: req.flash('loginMessage') });
+          })
+      });
+
+      app.post('/addUsage', isLoggedIn, function(req, res){
+        var errStr = undefined
+        if (undefined == req.body.name) {
+            errStr = "Undefined Name";
+            res.status(400);
+            res.json({error: errStr});
+            return;
+        } else if (undefined == req.body.time) {
+            errStr = "Undefined Time";
+            res.status(400);
+            res.json({error: errStr});
+            return;
+        } else if (undefined == req.body.reaction) {
+            errStr = "Undefined reaction";
+            res.status(400);
+            res.json({error: errStr});
+            return;
+        } else if (undefined == req.body.activity) {
+            errStr = "Undefined activity";
+            res.status(400);
+            res.json({error: errStr});
+            return;
+        }
+        if (undefined == req.body.date) {
+            errStr = "Undefined Date";
+            res.status(400);
+            res.json({error: errStr});
+            return;
+        }
+        var newUsage = new Usage();
+        newUsage.name = req.body.name;
+        newUsage.time = req.body.time;
+        newUsage.reaction = req.body.reaction;
+        newUsage.activity = req.body.activity;
+        newUsage.createdDate = req.body.date;
+        newUsage.save(function(err) {
+            if (err)
+                res.send(err);
+            res.render('home.ejs', { message: req.flash('loginMessage') });
+        })
+      });
+
+      // update the user profile add more information
+      app.post('/addInfo',isLoggedIn,function(req, res) {
+          User.findById(req.user, function(err, user) {
+              if (err)
+                  res.send(err);
+              user.local.brand = req.body.brand;
+              user.local.location = req.body.location;
+              user.local.color = req.body.color;
+              user.local.artist = req.body.artist;
+              user.local.media = req.body.media;
+              user.save(function(err) {
+                  if (err)
+                      res.send(err);
+                  res.render('home.ejs', { message: req.flash('loginMessage') });
               });
+          });
+      });
 
-        app.post('/addUsage', isLoggedIn, function(req, res){
-                  var newUsage = new Usage();
-                  newUsage.name = req.body.name;
-                  newUsage.time = req.body.time;
-                  newUsage.reaction = req.body.reaction;
-                  newUsage.activity = req.body.activity;
-                  newUsage.createdDate = req.body.date;
-                  newUsage.save(function(err) {
-                      if (err)
-                          res.send(err);
-                      res.render('home.ejs', { message: req.flash('loginMessage') });
-                  })
-              });
-
-        // update the user with id
-        app.post('/addInfo',isLoggedIn,function(req, res) {
-            User.findById(req.user, function(err, user) {
-                if (err)
-                    res.send(err);
-                user.local.brand = req.body.brand;
-                user.local.location = req.body.location;
-                user.local.color = req.body.color;
-                user.local.artist = req.body.artist;
-                user.local.media = req.body.media;
-                user.save(function(err) {
-                    if (err)
-                        res.send(err);
-                    res.render('home.ejs', { message: req.flash('loginMessage') });
-                });
-            });
-        });
-
-        // LOGOUT ==============================
-        app.get('/logout', function(req, res) {
-            req.logout();
-            res.redirect('/');
-        });
+      // LOGOUT ==============================
+      app.get('/logout', function(req, res) {
+          req.logout();
+          res.redirect('/');
+      });
 
 // =============================================================================
 // AUTHENTICATE (FIRST LOGIN) ==================================================
