@@ -221,7 +221,9 @@ services:
       - /data/mongodb/db:/data/db     # <- DB PATH DOCKER IMAGE TO HOST
 ```
 
-After creating the docker-compose.yml file we are ready to deploy it to the Cluster. Now if we are inside the app directory, just type: `ecs-cli compose up` or we can also enter the full path to the YAML file: `ecs-cli compose --file docker-compose.yml up`
+After creating the docker-compose.yml file we are ready to deploy it to the Cluster. Now if we are inside the app directory, just type: `ecs-cli compose up` or we can also enter the full path to the YAML file: 
+
+`ecs-cli compose --file docker-compose.yml up`
 
 You should see a similar output:
 
@@ -241,7 +243,9 @@ INFO[0061] Started container...                          container="acdf3435-ee5
 INFO[0061] Started container...                          container="acdf3435-ee54-418b-bdcf-05f3ed210b52/mongo"
 ```
 
-Now app should be up and running, you can access the app in the selected open port of the cluster (:80) for the app web container. We can see also see the running containers in the cluster with the following command: `ecs-cli ps`
+Now app should be up and running, you can access the app in the selected open port of the cluster (:80) for the app web container. We can see also see the running containers in the cluster with the following command: 
+
+`ecs-cli ps`
 
 ```
 > ecs-cli ps
@@ -329,5 +333,5 @@ curl -X GET 'http://localhost:8080/api/v1/users?token=iWUJXRFFmRGZSNEJDLjF1YmJpQ
 ### DELETE Users with ID
 
 ```sh
-curl -X GET 'http://localhost:8080/api/v1/users/58a51452f296b0740020c23c?token=iWUJXRFFmOXBsamcvLkRQaHMwLm1ObVgxV'
+curl -X DELETE 'http://localhost:8080/api/v1/users/58a51452f296b0740020c23c?token=iWUJXRFFmOXBsamcvLkRQaHMwLm1ObVgxV'
 ```
