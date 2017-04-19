@@ -308,8 +308,8 @@ curl -X GET 'http://localhost:8080/api/v1/users?token=iWUJXRFFmRGZSNEJDLjF1YmJpQ
     "local": {
       "apikey": "zDofwTaNtsIH6iQ9",
       "username": "jlroo",
-      "password": "$2a$08$fVwJ1Pd0ACf3293egq8rZ/Eu",
-      "email": "jrodriguezorjuela@luc.edu",
+      "password": "$2a$sasds8$fVwrqwu",
+      "email": "test@luc.edu",
       "created": "2017-02-16T02:40:56.742Z",
       "items": []
     }
@@ -319,7 +319,7 @@ curl -X GET 'http://localhost:8080/api/v1/users?token=iWUJXRFFmRGZSNEJDLjF1YmJpQ
     "__v": 0,
     "local": {
       "apikey": "xoyAZMB7QI6BQONC",
-      "password": "$2a$08$ffs3Q3HcAplRvcRZXJZwHRSuK",
+      "password": "$2aasa$slRfsd$%HRSuK",
       "email": "test@40luc.edu",
       "username": "test",
       "created": "2017-02-16T02:54:10.743Z",
